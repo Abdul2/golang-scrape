@@ -1,17 +1,18 @@
 
 package main
+
 import (
 	"fmt"
 	"net/http"
 	"golang.org/x/net/html"
-	//"regexp"
-	//"strings"
-	//"html"
 	"regexp"
+	"os"
+	// "io/ioutil" debug use
+
 )
 
 
-const landingpage string = "https://london.craigslist.co.uk/search/cas?sort=date&query=w4m"
+
 
 func f(n *html.Node) {
 
@@ -31,8 +32,6 @@ func f(n *html.Node) {
 			if r.MatchString(s){
 
 				s1 := r.FindAllString(s, -1)
-
-
 
 				fmt.Printf("%s\n",s1)
 
@@ -54,7 +53,7 @@ func main() {
 
 	//point at landing page
 
-	url := landingpage
+	url := os.Getenv("landingpage")
 
 
 	resp, err := http.Get(url)
@@ -64,8 +63,15 @@ func main() {
 
 	defer resp.Body.Close()
 
+	//debug use
+	//page, _  := ioutil.ReadAll(resp.Body)
+	//fmt.Printf("%s",page)
+
 
 	doc, err := html.Parse(resp.Body)
+
+
+
 
 	if err != nil {
 
