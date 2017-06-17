@@ -9,6 +9,7 @@ import (
 	"os"
 	"io/ioutil"
 	"net/http"
+	//"regexp"
 	"regexp"
 )
 
@@ -20,7 +21,41 @@ func main() {
 	r, _ := regexp.Compile(`\/cas\/\d\d\d\d\d\d\d\d\d\d\.html`) // /cas/6180039890.html]
 
 
-	resp, err := http.Get(url)
+	values := htmlvalueextractor(url,"href","a")
+
+
+	fmt.Printf("%v",values)
+
+	for _, v:= range values{
+
+		if r.MatchString(string(v)) {fmt.Printf("%s\n",v)}
+
+	}
+
+
+
+}
+
+//returns a slice of data caller is looking for. for a given url, node type and key it retruns a slice of values
+//associated with the keys
+// for example <a href=2 > and <a href=3> where a=node and href=key it will return slice of 2,3
+//the caller is responsible for processing the returned data
+func Errorhandling(err error){
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+
+
+func htmlvalueextractor (url string, key string, node string) []string{
+
+
+b := make([]string, 1)
+
+resp, err := http.Get(url)
 	if err != nil {
 		panic(err)
 	}
@@ -40,13 +75,16 @@ func main() {
 
 	Errorhandling(err)
 
+
+	//variable as a function
 	var f func(*html.Node)
 	f = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "a" {
+		if n.Type == html.ElementNode && n.Data == node {
 			for _, a := range n.Attr {
-				if a.Key == "href" && r.MatchString(a.Val){
+				if a.Key == key {
 					fmt.Println(a.Val)
-
+					st := fmt.Sprintf("%s",a.Val)
+					b = append(b,st)
 					break
 				}
 			}
@@ -56,13 +94,9 @@ func main() {
 		}
 	}
 	f(doc)
-}
 
-//handles error
-func Errorhandling(err error){
-
-	if err != nil {
-		log.Fatal(err)
-	}
+return b
 
 }
+
+
