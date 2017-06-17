@@ -1,59 +1,23 @@
-
 package main
 
 import (
+
 	"fmt"
-	"net/http"
 	"golang.org/x/net/html"
-	"regexp"
+	"strings"
+	"log"
 	"os"
-	// "io/ioutil" debug use
-
+	"io/ioutil"
+	"net/http"
+	"regexp"
 )
-
-
-
-
-func f(n *html.Node) {
-
-
-	r, _ := regexp.Compile(`\/cas\/\d\d\d\d\d\d\d\d\d\d\.html`) // /cas/6180039890.html]
-
-	if n.Type == html.ElementNode && n.Data == "a" {
-
-
-		for _, t := range n.Attr{
-
-
-			s := fmt.Sprint(t)
-
-			//fmt.Println(s)
-
-			if r.MatchString(s){
-
-				s1 := r.FindAllString(s, -1)
-
-				fmt.Printf("%s\n",s1)
-
-
-			}
-		}
-
-
-
-	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		f(c)
-	}
-}
-
 
 func main() {
 
 
-	//point at landing page
-
 	url := os.Getenv("landingpage")
+
+	r, _ := regexp.Compile(`\/cas\/\d\d\d\d\d\d\d\d\d\d\.html`) // /cas/6180039890.html]
 
 
 	resp, err := http.Get(url)
@@ -63,25 +27,42 @@ func main() {
 
 	defer resp.Body.Close()
 
-	//debug use
-	//page, _  := ioutil.ReadAll(resp.Body)
-	//fmt.Printf("%s",page)
+
+	page, err  := ioutil.ReadAll(resp.Body)
+
+	Errorhandling(err)
+
+	s := fmt.Sprintf("%s",page)
 
 
-	doc, err := html.Parse(resp.Body)
+	doc, err := html.Parse(strings.NewReader(s))
 
 
+	Errorhandling(err)
 
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "a" {
+			for _, a := range n.Attr {
+				if a.Key == "href" && r.MatchString(a.Val){
+					fmt.Println(a.Val)
 
-	if err != nil {
-
-		panic(err)
+					break
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
 	}
-	//var f func(*html.Node)
-
 	f(doc)
-
-
-
 }
 
+//handles error
+func Errorhandling(err error){
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
